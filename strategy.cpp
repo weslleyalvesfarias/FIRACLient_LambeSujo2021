@@ -1,4 +1,4 @@
-#include "strategy.h"
+﻿#include "strategy.h"
 
 
 Strategy::Strategy(bool time)
@@ -124,8 +124,8 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
    yellow = Team(y0,y1,y2);
 
    double dist1, dist2;
-    cout << endl;
-   if (ball.x()<-0.65)
+   cout << endl;
+   if (ball.x()<0.65)
     {
         dist1 = sqrt(pow(b1.x()-ball.x(),2)+pow(b1.y()-ball.y(),2));
         dist2 = sqrt(pow(b2.x()-ball.x(),2)+pow(b2.y()-ball.y(),2));
@@ -137,7 +137,6 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
     }
     if(1 /*sit_juiz == "GAME_ON"*/){
          goleiro_petersson2(b0,ball,0);
-         atacante_todos(blue,yellow,ball,2,1);
          if((ball.x() > -0.1)&&((dist1>0.15)||(dist2>0.15))){
              if (dist1 > dist2){
                  cout<<"config 1"<<endl;
@@ -159,6 +158,7 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
     }
 
     //goleiro_petersson2(b0,ball,0);
+    //zagueiro2(b1,ball,1);
     //atacante_todos(blue,yellow,ball,2,1);
 
     /*if(replain)
@@ -204,8 +204,9 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
        replain=true;
    double v_pref = 0.5;
    pure_pursuit(b1,1,caminho,l_ahead,v_pref);*/
-   //pair<double,double> goalP=make_pair(ball.x(),ball.y());
-   //vaiParaRRT(b1,1,goalP);
+   //pair<double,double> bola=make_pair(ball.x(),ball.y());
+   //pair<double,double> goalP=make_pair(-0.76,0);
+   //vaiParaRRT(b1,1,goalP,bola);
    //takeBallToGoal(b1,1,goalP);
 
 
@@ -281,6 +282,12 @@ void Strategy::cinematica_azul()
 
         vRL[i][0] = limita_velocidade(vRL[i][0],vrMax);
         vRL[i][1] = limita_velocidade(vRL[i][1],vrMax);
+
+        vRL[i][0] = velocidades_azul[i][0]*(1 - k[i]) + vRL[i][0]*k[i];
+        vRL[i][1] = velocidades_azul[i][1]*(1 - k[i]) + vRL[i][1]*k[i];
+
+        velocidades_azul[i][0] = vRL[i][0]*k[i];
+        velocidades_azul[i][1] = vRL[i][1]*k[i];
 
         if(bandeira) //Bandeira relacionada ao Firekick
         {//Se for fire kick, ela é falsa
@@ -719,7 +726,7 @@ int Strategy::buscaPontoMaisProximo(vector<pair<double, double>> arvore, pair<do
 pair<double, double> Strategy::gerarNovoPonto(pair<double, double> q_near, pair<double, double> q_rand, double passo)
 {
     //Parâmetro de filtro
-    double k=0.85;
+    double k=0.5;
 
     double norm = distancia(q_rand.first,q_rand.second,q_near.first,q_near.second);
     double qnew_x = q_near.first + passo*(q_rand.first - q_near.first)/norm;
@@ -751,7 +758,7 @@ bool Strategy::regraDeExclusao(pair<double, double> q_new, Team obs, int idx)
             if(i!=idx)
             {
                 double dist=distancia(q_new.first,q_new.second,obs.at(i).x(),obs.at(i).y());
-                if(dist<(2.35*raioRobo))
+                if(dist<(2.2*raioRobo))
                     {
                         resultado=false;
                         break;
@@ -828,7 +835,7 @@ bool Strategy::dotCriterio(pair<double, double> currPos, pair<double, double> ca
 
 }
 
-void Strategy::vaiParaRRT(fira_message::Robot robot, int id_robot, pair<double, double> goalP)
+void Strategy::vaiParaRRT(fira_message::Robot robot, int id_robot, pair<double, double> goalP,pair<double, double> bola)
 {
     double Curr_velR1 = sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2));
 
@@ -836,7 +843,7 @@ void Strategy::vaiParaRRT(fira_message::Robot robot, int id_robot, pair<double, 
 
     double raio_rrt=0.45;  //Raio da RRT
 
-    double a = 0.85; //frequência de corte
+    double a = 0.5; //frequência de corte
     pair<double,double> currPos=make_pair(robot.x(),robot.y());
 
     if(replain)
@@ -850,7 +857,7 @@ void Strategy::vaiParaRRT(fira_message::Robot robot, int id_robot, pair<double, 
                     if(plain && (Curr_velR1>0.015))
                        currPos=carrot_point;
 
-                    caminho = path_planningRRT(currPos,goalP,robots,1,200,raio_rrt);
+                    caminho = path_planningRRT(currPos,bola,robots,1,300,raio_rrt);
                     filtro_caminho(a);
                     setup_pure_pursuit(caminho.at(0));
 
@@ -874,7 +881,9 @@ void Strategy::vaiParaRRT(fira_message::Robot robot, int id_robot, pair<double, 
 
     double v_pref = 0.35;
 
-    pure_pursuit(robot,id_robot,caminho,l_ahead,v_pref);
+    //pure_pursuit(robot,id_robot,caminho,l_ahead,v_pref);
+    ang_err err_goal = turnToDestination(robot,bola,goalP);
+    pure_pursuit2(robot,id_robot,caminho,err_goal);
 
 
     //Envio de dados para o plot
@@ -951,10 +960,45 @@ void Strategy::takeBallToGoal(fira_message::Robot robot,int id_robot, pair<doubl
 
     pure_pursuit(robot,id_robot,caminho,l_ahead,v_pref);
 
+    //pure_pursuit2(robot,id_robot,caminho,goalP);
 
+}
+ang_err Strategy::turnToDestination(fira_message::Robot robot, pair<double, double> ball, pair<double, double> dest)
+{
+
+    //Comportamento simples com muito a ser aprimorado
+
+    double dist = sqrt(pow(ball.first-robot.x(),2)+pow(ball.second-robot.y(),2));
+    ang_err err_goal;
+    cout << "distancia para a bola: " << dist <<endl;
+
+
+    if(dist<=0.1)//0.003
+        //double err_goal = atan2(ball.second-dest.second,ball.first-dest.first)*(180/M_PI);
+        err_goal = olhar(robot,dest.first,dest.second);
+    else
+    {
+        //ang_err err_goal = olhar(robot,robot.x(),robot.y()); // Zero
+        err_goal.fi = 0.0;
+        err_goal.flag = 0;
+    }
+
+
+    //pair<double, double> goal_p = make_pair(dest.first,dest.second);
+
+    cout << "Erro par o gol: " << err_goal.fi <<endl;
+    return err_goal;
+
+    // talvez tenha influnêcia na movimentação lateral da bola em relação ao robô
+    // verificar efeito no replanejamento, pois pode requerer a associação de um novo comportamento independente da rrt
 
 }
 
+void Strategy::PENALTY_KICK(int id, ang_err angulo)
+{
+    VW[id][0] = angulo.flag*5;
+    VW[id][1] = 0;
+}
 
 void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref)
 {
@@ -1003,6 +1047,37 @@ void Strategy::pure_pursuit(fira_message::Robot robot, int id_robot,vector<pair<
     //send_data_control(sqrt(pow(v_swp.first, 2)+pow(v_swp.second, 2)),sqrt(pow(robot.vx(), 2)+pow(robot.vy(), 2)));
 
 
+}
+
+void Strategy::pure_pursuit2(fira_message::Robot robot, int id_robot, vector<pair<double, double> > points, ang_err err_to_goal)
+{
+    //Calcular distâncias do robô aos pontos no caminho
+
+    //evitar estouro de vetor
+    int treshold = points.size();
+    if(pivot_pp > treshold-1)
+    {
+        pivot_pp=treshold-1;
+        cout << "Pivo: "<< pivot_pp<<endl;
+    }
+
+
+
+    double dd = sqrt(pow(points.at(pivot_pp).first-robot.x(),2)+
+                     pow(points.at(pivot_pp).second-robot.y(),2));
+
+    double d_acc = 0.05;
+
+    if( (dd < d_acc)&&(pivot_pp<treshold-1))
+        pivot_pp=pivot_pp+1;
+    else if(pivot_pp>=treshold-1)
+      {
+        replain=true;  // habilita replanejamento
+      }
+
+    ang_err angulo = olhar(robot, points.at(pivot_pp).first, points.at(pivot_pp).second);
+    VW[id_robot][0] = 0.25*Vmax*angulo.flag;
+    VW[id_robot][1] = controleAngular(angulo.fi + err_to_goal.fi);
 }
 
 pair<double, double> Strategy::sweep_path(pair<double, double> goal_p, pair<double, double> ref_p, double v_pref)
@@ -1672,6 +1747,7 @@ void Strategy::atacante_todos(Team rb,Team adversario, fira_message::Ball ball, 
         if(ball.x()==0)
         {
             vaiPara(rb[id],ball.x(),ball.y(),id);
+
         }
         else
         {
@@ -1706,9 +1782,13 @@ void Strategy::atacante_todos(Team rb,Team adversario, fira_message::Ball ball, 
                     double attachY = ball.y() - (0.8*dist_target)*cos(atan2(ball.x() - adversario[target].x(),ball.y() - adversario[target].y()));
 
                     vaiPara_desviando(rb[id],attachX,attachY,id);
+                    //vaiParaRRT(rb[id],id,make_pair(attachX,attachY),make_pair(-0.76,0));
                 }
                 else
+                {
                     vaiPara_desviando(rb[id],0.10,(*resultante_2)[1]-0.1,id);
+                }
+
 
             }else
             {
@@ -1726,7 +1806,11 @@ void Strategy::atacante_todos(Team rb,Team adversario, fira_message::Ball ball, 
                 if(zag_dist/dist < 0.3)
                     vaiPara_desviando(rb[id],attachX-0.1,c*0.25,id);
                 else
+                {
                     vaiPara_desviando(rb[id],(*resultante_2)[0],(*resultante_2)[1],id);
+                    //vaiParaRRT(rb[id],id,make_pair((*resultante_2)[0],(*resultante_2)[1]),make_pair(-0.76,0));
+
+                }
 
                 /*double distToGoal = sqrt(pow(rb[id].x()-meioGolx,2.0)+pow(rb[id].y()-0,2.0));
                 if(distToGoal < 0.5 && ball.x()>rb[id].x() && (ball.y() < 0.20 && ball.y()>-0.20) )

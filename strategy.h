@@ -199,13 +199,18 @@ class Strategy {
 
     //----- Comportamentos
         //ir para ponto
-    void vaiParaRRT(fira_message::Robot robot,int id_robot, pair<double,double> goalP);
+    void vaiParaRRT(fira_message::Robot robot,int id_robot, pair<double,double> goalP,pair<double, double> bola);
         //Tenatar levar a bola para o goal
     void takeBallToGoal(fira_message::Robot robot,int id_robot, pair<double,double> ballPos);
        bool flagTbT; //Flag
+       //erro de orientação ao ponto de interesse até a bola
+    ang_err turnToDestination(fira_message::Robot robot, pair<double, double> ball, pair<double, double> dest);
+       //Comportamento pro penalty
+    void PENALTY_KICK(int, ang_err);
 
    //------ Path Tracking
     void pure_pursuit(fira_message::Robot robot,int id_robot,vector<pair<double,double>> points, double lookAhead_dist, double v_pref);
+    void pure_pursuit2(fira_message::Robot robot,int id_robot,vector<pair<double,double>> points, ang_err err_to_goal);
     pair<double,double> sweep_path(pair<double,double> goal_p, pair<double,double> ref_p, double v_pref);
     double controleLinear(double err, double Kp, double Ki);
     void setup_pure_pursuit(pair<double,double> p);
