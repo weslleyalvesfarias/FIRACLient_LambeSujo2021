@@ -138,7 +138,9 @@ void Strategy::strategy_blue(fira_message::Robot b0, fira_message::Robot b1,fira
         dist2 = sqrt(pow(b2.x()-ball.x(),2)+4*pow(b2.y()-ball.y(),2));
     }
     if(1 /*sit_juiz == "GAME_ON"*/){
-         goleiro_petersson2(b0,ball,0);
+         //goleiro_petersson2(b0,ball,0);
+
+        goleiro_weslley(b0,ball,0);
          if((ball.x() > -0.1)&&((dist1>0.15)||(dist2>0.15))){
              if (dist1 > dist2){
                  cout<<"config 1"<<endl;
@@ -249,7 +251,8 @@ void Strategy::strategy_yellow(fira_message::Robot y0, fira_message::Robot y1,fi
 
     if(/*sit_juiz == "GAME_ON"*/ 1){
 
-        goleiro_petersson2(y0,ball,0);
+        //goleiro_petersson2(y0,ball,0);
+        goleiro_weslley(y0,ball,0);
          if((ball.x() < -0.1)&&((dist1>0.15)||(dist2>0.15))){
              if (dist1 > dist2){
                  zagueiro2(y1,ball,1);
@@ -2154,6 +2157,146 @@ void Strategy::goleiro_petersson2(fira_message::Robot rb,fira_message::Ball ball
     }
 
 }
+
+
+void Strategy::goleiro_weslley(fira_message::Robot rb,fira_message::Ball ball, int id){
+    // Atualização do GoleiroPetersson2 para evitar o penalty com a bola parada dentro da área
+    double top_limit = 0.17; //largura do gol/2
+    double x_desejado = -0.7*lado;
+    double delta = 0.01; // pra impedir que ele fique sambando parado no gol
+    double velocidade = 2.5;
+    double dist = distancia(rb,ball.x(),ball.y());
+    vector <double> new_pos = {0,0};
+
+    //se a bola estiver longe do goleiro utiliza o preditor para ajeitar sua posição
+    if ( dist > 0.3){
+        new_pos = {predictedBall.x,predictedBall.y};
+        velocidade = 2.5;
+    }else{
+        new_pos = {ball.x(),ball.y()};
+        velocidade = 3;
+    }
+    double dist_ball = distancia(x_desejado,top_limit,-0.63*lado,0.36);
+    if(dist < dist_ball && ball.x() > rb.x() && rb.x() < -0.63 && ball.y() <= top_limit+dist_ball && ball.y() >=-top_limit-dist_ball && lado == 1){
+        vaiPara(rb,ball.x(),ball.y(),id);
+    }else if(dist < dist_ball && ball.x() < rb.x() && rb.x() > 0.63 && ball.y() <= top_limit+dist_ball && ball.y() >=-top_limit-dist_ball && lado == -1){
+        vaiPara(rb,ball.x(),ball.y(),id);
+    }else{
+        //Verifica se o robô está perto do centro do gol
+        if(distancia(rb,x_desejado,rb.y()) >= 0.02){
+
+            if(distancia(rb,x_desejado,rb.y()) >= 0.3){
+                  vaiPara_desviando(rb,x_desejado,0.0,id);  // vai para o centro do gol
+            }else{
+                  vaiPara(rb,x_desejado,0.0,id); // vai para o centro do gol
+            }
+
+        }else{
+
+            ang_err angulo = olhar(rb,rb.x(),top_limit + 5); // calcula diferença entre angulo atual e angulo desejado
+            if(angulo.fi >= 0.5 || angulo.fi<= -0.5){ //se o robô não está aproximadamente 90 graus
+                andarFrente(0,id);
+                VW[id][1] = controleAngular(angulo.fi);
+            }
+
+            else if(rb.y() < top_limit && rb.y() + delta < new_pos[1]){ //robô abaixo da bola
+
+                if(angulo.flag == 1){
+                    //andarFrente(125,id);
+                    VW[id][0] = velocidade;
+                    VW[id][1] = 0;
+                }
+                else{
+                    //andarFundo(125,id);
+                    VW[id][0] = -velocidade;
+                    VW[id][1] = 0;
+                }
+            }
+            else if(rb.y() > -top_limit && rb.y() - delta > new_pos[1]){ //robô acima da bola
+                if(angulo.flag == 1){
+                    //andarFundo(125,id);
+                    VW[id][0] = -velocidade;
+                    VW[id][1] = 0;
+                }
+                else{
+                    VW[id][0] = velocidade;
+                    VW[id][1] = 0;
+                    //andarFrente(125,id);
+                }
+            }
+            else{
+                andarFrente(0,id);
+            }
+            //gira se a bola estiver muito perto do goleiro
+            if (distancia(rb,ball.x(),ball.y()) < 0.07){  //0.07
+                if (((rb.y()>0)&&(predictedBall.y>rb.y()+0.01))||((rb.y()<0)&&(predictedBall.y<rb.y()-0.01)))
+                { //Só chuta se a bola não tiver a caminho de entrar no gol (condicao nova pos unball)
+                    if((ball.y() < rb.y() && lado == 1)){
+                       girarHorario(125,id);
+                    }
+                    if((ball.y() > rb.y() && lado == -1)){
+                       girarHorario(125,id);
+                    }
+                    if((ball.y() > rb.y() && lado == 1)){
+                       girarAntihorario(125,id);
+                    }
+                    if((ball.y() < rb.y() && lado == -1)){
+                       girarAntihorario(125,id);
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+    double lim_x[2] = {0.58,0.75};
+    double lim_y[2] = {0.17,0.38};
+    //lim_x = 0.75 e 0.6 lim_y 0.2 0.35
+    //azul
+    if ((lado == 1) && (distancia(rb,ball.x(),ball.y()) <= 0.1) && ((rb.y()<-top_limit-0.05)||(rb.y()>top_limit+0.05))){
+
+        cout << "ENTREIEEEEE" << endl;
+        if((ball.x() >= -lim_x[1]) && (ball.x() <= -lim_x[0]) && (ball.y() >= -lim_y[1]) && (ball.y() <= -lim_y[0])){
+            //vaiPara(rb,ball.x(),ball.y(),id);
+            cout << "ENTREIEEEEE" << endl;
+            if(ball.y() < rb.y()){
+               girarHorario(125,id);
+            }else{
+               girarAntihorario(125,id);
+            }
+        }
+        if((ball.x() >= -lim_x[1]) && (ball.x() <= -lim_x[0]) && (ball.y() <= lim_y[1]) && (ball.y() >= lim_y[0])){
+                if(ball.y() < rb.y()){
+                   girarHorario(125,id);
+                }else{
+                   girarAntihorario(125,id);
+                }
+        }
+    //amarelo
+    }else if ((lado == -1) && (distancia(rb,ball.x(),ball.y()) <= 0.1)&& ((rb.y()<-top_limit-0.05)||(rb.y()>top_limit+0.05))){
+        if((ball.x() <= lim_x[1]) && (ball.x() >= lim_x[0]) && (ball.y() >= -lim_y[1]) && (ball.y() <= -lim_y[0])){
+            //vaiPara(rb,ball.x(),ball.y(),id);
+            //vaiPara(rb,ball.x(),ball.y(),id);
+            if(ball.y() > rb.y()){
+               girarHorario(125,id);
+            }else{
+               girarAntihorario(125,id);
+            }
+        }
+        if((ball.x() <= lim_x[1]) && (ball.x() >= lim_x[0]) && (ball.y() <= lim_y[1]) && (ball.y() >= lim_y[0])){
+           // vaiPara(rb,ball.x(),ball.y(),id);
+            if(ball.y() > rb.y()){
+               girarHorario(125,id);
+            }else{
+               girarAntihorario(125,id);
+            }
+        }
+    }
+    */
+
+}
+
+
 
 void Strategy::FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id){
 

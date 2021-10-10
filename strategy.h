@@ -146,6 +146,7 @@ class Strategy {
     void chute(int idRobot, int sinal);
     void vaiPara_desviando2(fira_message::Robot,double,double,int);
     void FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id);
+    void goleiro_weslley(fira_message::Robot rb,fira_message::Ball ball, int id);
 
     //Atributos para zagueiro_cone
      vector<pair<double,double>>* componentes = NULL;
