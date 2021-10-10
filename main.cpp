@@ -29,6 +29,8 @@ QString getFoulNameById(VSSRef::Foul foul){
     }
 }
 
+
+/*
 QString getTeamColorNameById(VSSRef::Color color){
     switch(color){
         case VSSRef::Color::NONE:    return "NONE";
@@ -58,7 +60,7 @@ QString getHalfNameById(VSSRef::Half half){
     }
 }
 
-
+*/
 
 void reposicionar_time(double x[],double y[],double ori[],ReplacerClient *replacerClient){
     for(int i = 0; i < 3; i++){
