@@ -2177,22 +2177,39 @@ void Strategy::goleiro_weslley(fira_message::Robot rb,fira_message::Ball ball, i
         velocidade = 3;
     }
     double dist_ball = distancia(x_desejado,top_limit,-0.63*lado,0.36);
-    if(dist < dist_ball && ball.x() > rb.x() && rb.x() < -0.63 && ball.y() <= top_limit+dist_ball && ball.y() >=-top_limit-dist_ball && lado == 1){
+    //if(dist < dist_ball && ball.x() > rb.x() && rb.x() < -0.63 && ((ball.y() > top_limit && ball.y() <= top_limit+dist_ball) || (ball.y() < -top_limit && ball.y() >=-top_limit-dist_ball)) && lado == 1){
+    if(dist < dist_ball && ball.x() > rb.x() && rb.x() < -0.63 && (ball.y() > top_limit || ball.y() < -top_limit) && lado == 1){
+       // cout << "ENTREIIIIII" << endl;
         vaiPara(rb,ball.x(),ball.y(),id);
-    }else if(dist < dist_ball && ball.x() < rb.x() && rb.x() > 0.63 && ball.y() <= top_limit+dist_ball && ball.y() >=-top_limit-dist_ball && lado == -1){
+    //}else if(dist < dist_ball && ball.x() < rb.x() && rb.x() > 0.63 && ((ball.y() > top_limit && ball.y() <= top_limit+dist_ball) || (ball.y() < -top_limit && ball.y() >=-top_limit-dist_ball)) && lado == -1){
+    }else if(dist < dist_ball && ball.x() < rb.x() && rb.x() > 0.63 && (ball.y() > top_limit || ball.y() < -top_limit) && lado == -1){
         vaiPara(rb,ball.x(),ball.y(),id);
     }else{
         //Verifica se o robô está perto do centro do gol
-        if(distancia(rb,x_desejado,rb.y()) >= 0.02){
+        if(distancia(rb,x_desejado,rb.y()) >= 0.02  /*&& ((ball.y() >= top_limit+dist_ball || ball.y() >=-top_limit-dist_ball) && ball.x() > -0.63*lado)*/ /*|| rb.y() > top_limit || rb.y() < -top_limit*/ ){
 
-            if(distancia(rb,x_desejado,rb.y()) >= 0.3){
+            if(distancia(rb,x_desejado,rb.y()) >= dist_ball){
                   vaiPara_desviando(rb,x_desejado,0.0,id);  // vai para o centro do gol
             }else{
                   vaiPara(rb,x_desejado,0.0,id); // vai para o centro do gol
             }
+        }
+/*
+        else if(distancia(rb,x_desejado,-top_limit) >= 0.02  && rb.y()<-top_limit && ball.x() < 0.63 && lado==-1){
+            vaiPara(rb,x_desejado,-top_limit,id);  // vai para o centro do gol
+        }
+        else if(distancia(rb,x_desejado,top_limit) >= 0.02  && rb.y()>top_limit && ball.x() < 0.63 && lado ==-1 ){
+            vaiPara(rb,x_desejado,-top_limit,id);  // vai para o centro do gol
+        }
+        else if(distancia(rb,x_desejado,-top_limit) >= 0.02  && rb.y()<-top_limit && ball.x() > -0.63 && lado==1 ){
+            vaiPara(rb,x_desejado,-top_limit,id);  // vai para o centro do gol
+        }
+        else if(distancia(rb,x_desejado,top_limit) >= 0.02  && rb.y()>top_limit && ball.x() > -0.63 && lado ==1){
+            vaiPara(rb,x_desejado,-top_limit,id);  // vai para o centro do gol
+        }
+*/
 
-        }else{
-
+        else{
             ang_err angulo = olhar(rb,rb.x(),top_limit + 5); // calcula diferença entre angulo atual e angulo desejado
             if(angulo.fi >= 0.5 || angulo.fi<= -0.5){ //se o robô não está aproximadamente 90 graus
                 andarFrente(0,id);
@@ -2343,11 +2360,11 @@ void Strategy::FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id)
             bandeira = false;
             flag = false;
         }else{
-            cout<<"Olhando pro gol mas não pra bola"<<endl;
+            //cout<<"Olhando pro gol mas não pra bola"<<endl;
             bandeira = true;
         }
     }else{
-        cout<<"Não estou olhando pro gol"<<endl;
+        //cout<<"Não estou olhando pro gol"<<endl;
         bandeira = true;
     }
     if(flag){

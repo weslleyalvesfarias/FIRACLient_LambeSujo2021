@@ -414,7 +414,10 @@ int main(int argc, char *argv[]) {
             replacerClient->sendFrame();
         }
         */
-        std::cout << "Condição de" << getFoulNameById(refereeClient->getLastFoul()).toStdString() ;
+
+
+        //std::cout << "Condição de " << getFoulNameById(refereeClient->getLastFoul()).toStdString() ;
+
         // Stop timer
         timer.stop();
 
