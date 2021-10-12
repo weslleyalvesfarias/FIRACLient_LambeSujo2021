@@ -105,11 +105,11 @@ class Strategy {
 
     void strategy_blue(fira_message::Robot b0, fira_message::Robot b1, fira_message::Robot b2,
                       fira_message::Robot y0, fira_message::Robot y1, fira_message::Robot y2
-                     , fira_message::Ball ball, const fira_message::Field & field, string);
+                     , fira_message::Ball ball, const fira_message::Field & field, int);
 
     void strategy_yellow(fira_message::Robot y0, fira_message::Robot y1, fira_message::Robot y2,
                          fira_message::Robot b0, fira_message::Robot b1, fira_message::Robot b2,
-                         fira_message::Ball ball, const fira_message::Field & field, string);
+                         fira_message::Ball ball, const fira_message::Field & field, int);
 
     void girarHorario(double,int);
     void girarAntihorario(double,int);
@@ -137,6 +137,7 @@ class Strategy {
     void vaiPara_desviando(fira_message::Robot,double,double,int);
     void goleiro_petersson(fira_message::Robot,fira_message::Ball,int);
     void goleiro_petersson2(fira_message::Robot,fira_message::Ball,int);
+    void Goleiro_linha(fira_message::Robot rb, fira_message::Ball ball, int id);
     void chute(int);
     void zagueiro2(fira_message::Robot rb, fira_message::Ball ball, int id);
     void calc_repulsao2(fira_message::Robot rb,double F[]);
@@ -144,6 +145,9 @@ class Strategy {
     void chute(int idRobot, int sinal);
     void vaiPara_desviando2(fira_message::Robot,double,double,int);
     void FIRE_KICK(fira_message::Robot rb,fira_message::Ball ball, int id);
+    void FIRE_KICK(fira_message::Robot rb,pair<double,double> ball, int id);
+
+
 
     //Atributos para zagueiro_cone
      vector<pair<double,double>>* componentes = NULL;
@@ -175,6 +179,7 @@ class Strategy {
     double distancia(double,double,double,double); //<-- usamos essa
     double limita_velocidade(double, double); //<-- usamos essa
 
+  public:
 //------------------ Edições 2021 ------------------------------------------------------------------------------------------------//
  //Métodos
    //----------- Path Planning ------------------
@@ -202,7 +207,11 @@ class Strategy {
     void vaiParaRRT(fira_message::Robot robot,int id_robot, pair<double,double> goalP,pair<double, double> bola);
         //Tenatar levar a bola para o goal
     void takeBallToGoal(fira_message::Robot robot,int id_robot, pair<double,double> ballPos);
-       bool flagTbT; //Flag
+        int flagTbT; //Flag
+        double posx,posy,vx,vy,dx,dy,ux,uy; //Variáveis para o takeBallToGoal
+        //Atacante monstro
+        void Cr7(fira_message::Robot rb, fira_message::Ball ball, int id);
+
        //erro de orientação ao ponto de interesse até a bola
     ang_err turnToDestination(fira_message::Robot robot, pair<double, double> ball, pair<double, double> dest);
        //Comportamento pro penalty
