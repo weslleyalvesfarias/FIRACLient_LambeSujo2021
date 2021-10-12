@@ -2189,9 +2189,9 @@ void Strategy::goleiro_weslley(fira_message::Robot rb,fira_message::Ball ball, i
         if(distancia(rb,x_desejado,rb.y()) >= 0.02  /*&& ((ball.y() >= top_limit+dist_ball || ball.y() >=-top_limit-dist_ball) && ball.x() > -0.63*lado)*/ /*|| rb.y() > top_limit || rb.y() < -top_limit*/ ){
 
             if(distancia(rb,x_desejado,rb.y()) >= dist_ball){
-                  vaiPara_desviando(rb,x_desejado,0.0,id);  // vai para o centro do gol
+                  vaiPara_desviando(rb,x_desejado,(top_limit*ball.y())/abs(ball.y()),id);  // vai para o centro do gol
             }else{
-                  vaiPara(rb,x_desejado,0.0,id); // vai para o centro do gol
+                  vaiPara(rb,x_desejado,(top_limit*ball.y())/abs(ball.y()),id); // vai para o centro do gol
             }
         }
 /*

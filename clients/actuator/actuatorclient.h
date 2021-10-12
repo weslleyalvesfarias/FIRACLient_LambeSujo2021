@@ -1,0 +1,27 @@
+#ifndef ACTUATORCLIENT_H
+#define ACTUATORCLIENT_H
+
+#include <clients/client.h>
+#include <proto/vssref_common.pb.h>
+#include <proto/packet.pb.h>
+
+class ActuatorClient : public Client
+{
+public:
+    using Client::Client;
+    void setTeamColor(VSSRef::Color teamColor);
+    void sendCommand(quint8 robotId, float wheelLeft, float wheelRight);
+
+private:
+    // Internal
+    VSSRef::Color _teamColor;
+
+    // Network management
+    void connectToNetwork();
+    void disconnectFromNetwork();
+
+    // Internal run
+    void runClient();
+};
+
+#endif // ACTUATORCLIENT_H
